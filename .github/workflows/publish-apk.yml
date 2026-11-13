@@ -5,8 +5,7 @@ on:
   push:
     branches: [main]
     paths:
-      - ".github/workflows/publish-apk.yml"
-      - "apk-parts/**"
+      - "apk-parts/READY"
 
 permissions:
   contents: write
@@ -19,7 +18,10 @@ jobs:
       - name: Rebuild APK
         run: |
           mkdir -p dist
-          cat apk-parts/part-* | base64 -d > dist/ARK-GGXX-0.6.0-debug.apk
+          cat apk-parts/part-* > /tmp/apk.b64
+          echo "182a1b84124b0676a4d02cb823c8911740c0b3f52aeff1b3091d2a0478bcb4ea  /tmp/apk.b64" | sha256sum -c -
+          base64 -d /tmp/apk.b64 > dist/ARK-GGXX-0.6.0-debug.apk
+          echo "f0fc5e1c205613110fa6be0784a087cec297bdeee2ce3f24a57a7be10e281503  dist/ARK-GGXX-0.6.0-debug.apk" | sha256sum -c -
           unzip -t dist/ARK-GGXX-0.6.0-debug.apk
       - name: Publish GitHub Release
         env:
@@ -29,5 +31,5 @@ jobs:
           git push origin :refs/tags/v0.6.0 || true
           gh release create v0.6.0 dist/ARK-GGXX-0.6.0-debug.apk \
             --title "ARK 0.6.0" \
-            --target main \
-            --notes "APK de debug ARM64 do ARK 0.6.0. Escolhe a sua ISO e abre no PPSSPP. A ISO não está embutida. Pacote org.ark.ggxx, minSdk 26, só arm64-v8a."
+            --target "${{ github.sha }}" \
+            --notes "APK de debug ARM64 do ARK 0.6.0. Escolhe a sua ISO e abre no PPSSPP. A ISO nao esta embutida. Pacote org.ark.ggxx, minSdk 26, somente arm64-v8a."
