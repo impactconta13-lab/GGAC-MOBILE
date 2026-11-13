@@ -1,0 +1,33 @@
+name: Publish APK release
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/publish-apk.yml"
+      - "apk-parts/**"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Rebuild APK
+        run: |
+          mkdir -p dist
+          cat apk-parts/part-* | base64 -d > dist/ARK-GGXX-0.6.0-debug.apk
+          unzip -t dist/ARK-GGXX-0.6.0-debug.apk
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete v0.6.0 --yes || true
+          git push origin :refs/tags/v0.6.0 || true
+          gh release create v0.6.0 dist/ARK-GGXX-0.6.0-debug.apk \
+            --title "ARK 0.6.0" \
+            --target main \
+            --notes "APK de debug ARM64 do ARK 0.6.0. Escolhe a sua ISO e abre no PPSSPP. A ISO não está embutida. Pacote org.ark.ggxx, minSdk 26, só arm64-v8a."
